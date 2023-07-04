@@ -41,18 +41,18 @@ runs:
             USING="$(gh api /repos/${{ inputs.repository }}/commits/${{ github.sha }}/branches-where-head --jq '.[0].name')"
           fi
           echo "::notice::Checkout: ${{ inputs.repository }} using ${USING}"
-          echo "{ref-exists}={true}" >> $GITHUB_OUTPUT
+          echo "ref-exists=true" >> $GITHUB_OUTPUT
         
         else
           if git ls-remote --heads --quiet --exit-code https://${{ inputs.token }}@github.com/${{ inputs.repository }}.git ${{ inputs.ref }}
           then
             echo "::notice::Checkout: ${{ inputs.repository }} using ${{ inputs.ref }}"
-            echo "{ref-exists}={true}" >> $GITHUB_OUTPUT
+            echo "ref-exists=true" >> $GITHUB_OUTPUT
           else
             USING="$(gh api /repos/${{ inputs.repository }} --jq '.default_branch')"
             echo "::notice::Checkout: ${{ inputs.repository }} does not have ref ${{ inputs.ref }} (fallback to ${USING})"
-            echo "{ref-exists}={false}" >> $GITHUB_OUTPUT
-            echo "{default-branch}={${USING}}" >> $GITHUB_OUTPUT
+            echo "ref-exists=false" >> $GITHUB_OUTPUT
+            echo "default-branch=${USING}" >> $GITHUB_OUTPUT
           fi
         fi
 
