@@ -38,7 +38,12 @@ runs:
           then
             USING="default branch"
           else
-            USING="$(gh api /repos/${{ inputs.repository }}/commits/${{ github.sha }}/branches-where-head --jq '.[0].name')"
+            GITHUB_SHA_TO_USE="${{ github.sha }}"
+            if [[ "${{ github.event_name }}" == "pull_request" ]]
+            then
+              GITHUB_SHA_TO_USE="${{ github.event.pull_request.head.sha }}"
+            fi
+            USING="$(gh api /repos/${{ inputs.repository }}/commits/${GITHUB_SHA_TO_USE}/branches-where-head --jq '.[0].name')"
           fi
           echo "::notice::Checkout: ${{ inputs.repository }} using ${USING}"
           echo "ref-exists=true" >> $GITHUB_OUTPUT
