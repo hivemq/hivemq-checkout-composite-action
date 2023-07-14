@@ -1,5 +1,5 @@
 name: Checkout
-description: "This is essentially the same as actions/checkout, but will fallback to the default branch if the ref does not exist."
+description: "This is a wrapper to actions/checkout that fallbacks to the default branch if the ref does not exist."
 
 inputs:
   fetch-depth:
