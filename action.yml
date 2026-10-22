@@ -49,13 +49,31 @@ runs:
           echo "ref-exists=true" >> $GITHUB_OUTPUT
         
         else
-          if git ls-remote --heads --quiet --exit-code https://${{ inputs.token }}@github.com/${{ inputs.repository }}.git ${{ inputs.ref }}
+          REF="${{ inputs.ref }}"
+          case "${REF}" in
+            refs/heads/* | refs/tags/*) REF_LOOKUPS=("${REF#refs/}") ;;
+            *) REF_LOOKUPS=("heads/${REF}" "tags/${REF}") ;;
+          esac
+          REF_FOUND=false
+          for REF_LOOKUP in "${REF_LOOKUPS[@]}"
+          do
+            if REF_ERROR="$(gh api /repos/${{ inputs.repository }}/git/ref/${REF_LOOKUP} --silent 2>&1)"
+            then
+              REF_FOUND=true
+              break
+            elif [[ "${REF_ERROR}" != *"(HTTP 404)"* ]]
+            then
+              echo "::error::Checkout: cannot look up ref ${REF} of ${{ inputs.repository }}: ${REF_ERROR}"
+              exit 1
+            fi
+          done
+          if [[ "${REF_FOUND}" == "true" ]]
           then
-            echo "::notice::Checkout: ${{ inputs.repository }} using ${{ inputs.ref }}"
+            echo "::notice::Checkout: ${{ inputs.repository }} using ${REF}"
             echo "ref-exists=true" >> $GITHUB_OUTPUT
           else
             USING="$(gh api /repos/${{ inputs.repository }} --jq '.default_branch')"
-            echo "::notice::Checkout: ${{ inputs.repository }} does not have ref ${{ inputs.ref }} (fallback to ${USING})"
+            echo "::notice::Checkout: ${{ inputs.repository }} does not have ref ${REF} (fallback to ${USING})"
             echo "ref-exists=false" >> $GITHUB_OUTPUT
             echo "default-branch=${USING}" >> $GITHUB_OUTPUT
           fi
